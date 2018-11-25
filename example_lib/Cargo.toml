@@ -1,0 +1,9 @@
+[package]
+name = "example_lib"
+version = "0.1.0"
+authors = ["James Andrew <james.andrew@metaswitch.com>"]
+license = "MIT"
+publish = false
+
+[dependencies]
+example_derive = { path = "../example_derive" }
