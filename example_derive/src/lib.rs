@@ -6,9 +6,10 @@ extern crate syn;
 
 use syn::DeriveInput;
 
+mod attributes;
 mod contents;
 
-#[proc_macro_derive(ContentsLen)]
+#[proc_macro_derive(ContentsLen, attributes(type_variant))]
 pub fn contents_len_derive(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     expand_derive(tokens, contents::derive)
 }

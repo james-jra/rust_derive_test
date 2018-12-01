@@ -6,7 +6,7 @@ use quote::quote;
 // };
 use syn::parse_quote;
 use syn::spanned::Spanned;
-use syn::{Data, DeriveInput, Fields, GenericParam, Generics};
+use syn::{AttrStyle, Data, DeriveInput, Fields, GenericParam, Generics};
 
 /// Generate the implementation of the `ContentsLen` trait for the given item.
 ///
@@ -14,11 +14,29 @@ use syn::{Data, DeriveInput, Fields, GenericParam, Generics};
 /// implementation, or an error string describing the problem.
 pub fn derive(item: DeriveInput) -> Result<TokenStream, String> {
     check_struct_data(&item.data)?;
+    for attr in item.attrs {
+        match attr.style {
+            AttrStyle::Inner(_) => {
+                println!("Style Inner");
+            }
+            AttrStyle::Outer => {
+                println!("Style Outer");
+            }
+        }
+        println!("tokens {:?}", attr.tts);
+    }
     let struct_name = item.ident;
 
     // Add `T: ContentsLen` to all type parameters
     let generics = add_trait_bounds(item.generics);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+
+    let typ_body = gen_typ_body(&item.data)?;
+    let typ = quote!{
+        fn typ(&self) -> Typ {
+            #typ_body
+        }
+    };
 
     let contents_len_body = gen_contents_len_body(&item.data)?;
     let contents_len = quote!{
@@ -30,7 +48,9 @@ pub fn derive(item: DeriveInput) -> Result<TokenStream, String> {
     let impl_contents_size = quote!{
         // The generated impl.
         impl #impl_generics ::contents_len::ContentsLen for #struct_name #type_generics #where_clause {
-            // The fn contents_len block
+            // The fn typ() block
+            #typ
+            // The fn contents_len() block
             #contents_len
         }
     };
@@ -73,6 +93,10 @@ fn gen_contents_len_body(data: &Data) -> Result<TokenStream, String> {
         }
         _ => unimplemented!(),
     }
+}
+
+fn gen_typ_body(_data: &Data) -> Result<TokenStream, String> {
+    Ok(quote! { Typ::Foo })
 }
 
 /// Add a bound `T: ContentsLen` to every type parameter T.
