@@ -11,22 +11,26 @@ mod contents;
 
 #[proc_macro_derive(ContentsLen, attributes(type_variant))]
 pub fn contents_len_derive(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    expand_derive(tokens, contents::derive)
+    expand_derive(tokens.into(), contents::derive).into()
 }
 
 fn expand_derive(
-    input: proc_macro::TokenStream,
+    input: proc_macro2::TokenStream,
     f: fn(DeriveInput) -> Result<proc_macro2::TokenStream, String>,
-) -> proc_macro::TokenStream {
-    let item = syn::parse(input).unwrap();
+) -> proc_macro2::TokenStream {
+    let item = syn::parse2(input).unwrap();
     match f(item) {
-        Ok(x) => x,
+        Ok(x) => {
+            println!("Ok {:?}", x);
+            x
+        },
         Err(e) => {
+            println!("Err {:?}", e);
             quote! {
-                compile_error(#e)
+                compile_error!(#e)
             }
         }
-    }.into()
+    }
 }
 
 #[cfg(test)]
