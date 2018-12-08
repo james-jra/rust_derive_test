@@ -1,4 +1,4 @@
-use models::Typ;
+use crate::models::Typ;
 
 pub trait ContentsLen {
     fn typ(&self) -> Typ;

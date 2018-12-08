@@ -1,13 +1,12 @@
-use quote::quote;
-//use quote::{quote, quote_spanned};
+use quote::{quote, quote_spanned};
 // use syn::{
 //     parse_macro_input, parse_quote, Data, DeriveInput, Fields, GenericParam, Generics, Index,
 // };
 use syn::parse_quote;
 use syn::spanned::Spanned;
-use syn::{Attribute, AttrStyle, Data, DeriveInput, Fields, GenericParam, Generics};
+use syn::{AttrStyle, Attribute, Data, DeriveInput, Fields, GenericParam, Generics};
 
-use attributes::TypVariant;
+use crate::attributes::TypVariant;
 
 /// Generate the implementation of the `ContentsLen` trait for the given item.
 ///
@@ -24,7 +23,7 @@ pub fn derive(item: DeriveInput) -> Result<proc_macro2::TokenStream, String> {
     if let Err(err) = typ_variant {
         return Ok(err);
     }
-    let typ_variant = typ_variant.unwrap();
+    let _typ_variant = typ_variant.unwrap();
 
     // Add `T: ContentsLen` to all type parameters
     let generics = add_trait_bounds(item.generics);
@@ -32,20 +31,20 @@ pub fn derive(item: DeriveInput) -> Result<proc_macro2::TokenStream, String> {
 
     //let typ_body = gen_typ_body(&typ_variant)?;
     let typ_body = gen_typ_body()?;
-    let typ = quote!{
+    let typ = quote! {
         fn typ(&self) -> Typ {
             #typ_body
         }
     };
 
     let contents_len_body = gen_contents_len_body(&item.data)?;
-    let contents_len = quote!{
+    let contents_len = quote! {
         fn contents_len(&self) -> usize {
             #contents_len_body
         }
     };
 
-    let impl_contents_size = quote!{
+    let impl_contents_size = quote! {
         // The generated impl.
         impl #impl_generics ::contents_len::ContentsLen for #struct_name #type_generics #where_clause {
             // The fn typ() block
@@ -96,8 +95,8 @@ fn gen_contents_len_body(data: &Data) -> Result<proc_macro2::TokenStream, String
 }
 
 //fn gen_typ_body(typ_variant: &TypVariant) -> Result<proc_macro2::TokenStream, String> {
-    // let typ_ident = typ_variant.0;
-    // Ok(quote! { #typ_ident })
+// let typ_ident = typ_variant.0;
+// Ok(quote! { #typ_ident })
 fn gen_typ_body() -> Result<proc_macro2::TokenStream, String> {
     Ok(quote! { Typ::Foo })
 }
@@ -117,15 +116,11 @@ fn add_trait_bounds(mut generics: Generics) -> Generics {
 fn check_attrs(attrs: &Vec<Attribute>) -> Result<(), String> {
     match attrs.len() {
         0 => Err("#[derive(ContentsLen)] requires the helper attribute: #[typ_variant(X)]".into()),
-        1 => {
-            match attrs[0].style {
-                AttrStyle::Inner(_) => {
-                    Err("#[typ_variant(X)] can only be used as an Outer style attribute".into())
-                }
-                AttrStyle::Outer => {
-                    Ok(())
-                }
+        1 => match attrs[0].style {
+            AttrStyle::Inner(_) => {
+                Err("#[typ_variant(X)] can only be used as an Outer style attribute".into())
             }
+            AttrStyle::Outer => Ok(()),
         },
         _ => Err("#[derive(ContentsLen)] only accepts one helper attribute: typ_variant".into()),
     }

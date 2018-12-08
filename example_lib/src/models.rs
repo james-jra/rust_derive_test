@@ -1,4 +1,4 @@
-use contents_len::ContentsLen;
+use crate::contents_len::ContentsLen;
 
 #[derive(Debug, PartialEq)]
 pub enum Typ {
