@@ -15,11 +15,11 @@ use crate::attributes::TypVariant;
 pub fn derive(item: DeriveInput) -> Result<proc_macro2::TokenStream, String> {
     // Validate the input data.
     check_struct_data(&item.data)?;
-    check_attrs(&item.attrs)?;
     let struct_name = item.ident;
 
     // Extract the #[typ_variant(X)] attribute
-    let typ_variant = TypVariant::try_from_attribute(item.attrs[0].clone());
+    let typ_val_attr = check_attrs(item.attrs)?;
+    let typ_variant = TypVariant::try_from_attribute(typ_val_attr);
     if let Err(err) = typ_variant {
         return Ok(err);
     }
@@ -113,18 +113,26 @@ fn add_trait_bounds(mut generics: Generics) -> Generics {
     generics
 }
 
-fn check_attrs(attrs: &Vec<Attribute>) -> Result<(), String> {
+fn check_attrs(mut attrs: Vec<Attribute>) -> Result<Attribute, String> {
     match attrs.len() {
         0 => Err("#[derive(ContentsLen)] requires the helper attribute: #[typ_variant(X)]".into()),
-        1 => match attrs[0].style {
-            AttrStyle::Inner(_) => {
-                Err("#[typ_variant(X)] can only be used as an Outer style attribute".into())
-            }
-            AttrStyle::Outer => Ok(()),
-        },
+        1 => Ok(()),
         _ => Err("#[derive(ContentsLen)] only accepts one helper attribute: typ_variant".into()),
     }
+    .and_then(|_| {
+        let attr = attrs.pop().unwrap();
+        if let AttrStyle::Inner(_) = attr.style {
+            return Err("#[typ_variant(X)] can only be used as an Outer style attribute".into());
+        };
+        Ok(attr)
+    })
 }
+//            match (attr.style, attr.name()) {
+//                (AttrStyle::Inner(_), _) => {
+//                    Err("#[typ_variant(X)] can only be used as an Outer style attribute".into())
+//                }
+//                (AttrStyle::Outer,  => Ok(attrs[0]),
+//        },
 
 /// Validate that trait derivation is defined for the provided item.
 /// Returns `Ok(())` or an error string describing the problem.
