@@ -18,19 +18,18 @@ pub fn derive(item: DeriveInput) -> Result<proc_macro2::TokenStream, String> {
     let struct_name = item.ident;
 
     // Extract the #[typ_variant(X)] attribute
-    let typ_val_attr = check_attrs(item.attrs)?;
+    let typ_val_attr = extract_type_attr(item.attrs)?;
     let typ_variant = TypVariant::try_from_attribute(typ_val_attr);
     if let Err(err) = typ_variant {
         return Ok(err);
     }
-    let _typ_variant = typ_variant.unwrap();
+    let typ_variant = typ_variant.unwrap();
 
     // Add `T: ContentsLen` to all type parameters
     let generics = add_trait_bounds(item.generics);
     let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
-    //let typ_body = gen_typ_body(&typ_variant)?;
-    let typ_body = gen_typ_body()?;
+    let typ_body = gen_typ_body(&typ_variant)?;
     let typ = quote! {
         fn typ(&self) -> Typ {
             #typ_body
@@ -94,10 +93,7 @@ fn gen_contents_len_body(data: &Data) -> Result<proc_macro2::TokenStream, String
     }
 }
 
-//fn gen_typ_body(typ_variant: &TypVariant) -> Result<proc_macro2::TokenStream, String> {
-// let typ_ident = typ_variant.0;
-// Ok(quote! { #typ_ident })
-fn gen_typ_body() -> Result<proc_macro2::TokenStream, String> {
+fn gen_typ_body(_typ_variant: &TypVariant) -> Result<proc_macro2::TokenStream, String> {
     Ok(quote! { Typ::Foo })
 }
 
@@ -113,7 +109,7 @@ fn add_trait_bounds(mut generics: Generics) -> Generics {
     generics
 }
 
-fn check_attrs(mut attrs: Vec<Attribute>) -> Result<Attribute, String> {
+fn extract_type_attr(mut attrs: Vec<Attribute>) -> Result<Attribute, String> {
     match attrs.len() {
         0 => Err("#[derive(ContentsLen)] requires the helper attribute: #[typ_variant(X)]".into()),
         1 => Ok(()),

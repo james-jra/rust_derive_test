@@ -1,26 +1,25 @@
 use syn::parse::{Parse, ParseStream};
-// use syn::punctuated::Punctuated;
-// use syn::{Attribute, Path, PathSegment, Token};
-use syn::{Attribute, Meta, Path};
+use syn::punctuated::Punctuated;
+use syn::{Attribute, Path, PathSegment, Token};
 
 pub struct TypVariant(pub Path);
 
 impl Parse for TypVariant {
     fn parse(input: ParseStream) -> syn::parse::Result<Self> {
         // Parse the
-        println!("Bar0");
-        println!("{:?}", input);
-        let path = input.call(Path::parse_mod_style)?;
-        println!("Bar1");
-        Ok(TypVariant(path))
-        // let mut vars = Punctuated::<PathSegment, Token![::]>::parse_terminated(input)?;
-        // if vars.len() != 1 {
-        //     println!("Foo4");
-        //     Err(input.error("#[typ_variant] only supports one Variant value."))
-        // } else {
-        //     println!("Foo5");
-        //     Ok(TypVariant(vars.pop().unwrap().into_value()))
-        // }
+        // println!("Bar0");
+        // println!("{:?}", input);
+        // let path = input.call(Path::parse_mod_style)?;
+        // println!("Bar1");
+        // Ok(TypVariant(path))
+        let mut vars = Punctuated::<PathSegment, Token![,]>::parse_terminated(input)?;
+        if vars.len() != 1 {
+            println!("Foo4");
+            Err(input.error("#[typ_variant] only supports one Variant value."))
+        } else {
+            println!("Foo5");
+            Ok(TypVariant(vars.pop().unwrap().into_value()))
+        }
     }
 }
 

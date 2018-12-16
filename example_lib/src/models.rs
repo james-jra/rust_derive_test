@@ -8,9 +8,12 @@ pub enum Typ {
 }
 
 pub struct Bar(u32);
+impl Bar {
+    const TYP: Typ = Typ::Bar;
+}
 impl ContentsLen for Bar {
     fn typ(&self) -> Typ {
-        Typ::Bar
+        Self::TYP
     }
     fn contents_len(&self) -> usize {
         4
@@ -28,7 +31,7 @@ impl ContentsLen for Baz {
 }
 
 #[derive(ContentsLen)]
-#[type_variant(Typ::Foo)]
+#[type_variant(Typ, Foo)]
 pub struct Foo {
     bar: Bar,
     baz: Baz,
